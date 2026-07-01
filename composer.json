@@ -1,5 +1,5 @@
 {
-    "name": "jeremyharris/cakephp-lazyload",
+    "name": "mralston/cakephp-lazyload",
     "description": "An association lazy-loader for CakePHP",
     "type": "cakephp-plugin",
     "keywords": [
