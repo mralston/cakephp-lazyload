@@ -2,6 +2,7 @@
 
 namespace JeremyHarris\LazyLoad\ORM;
 
+use Cake\Datasource\Exception\MissingPropertyException;
 use Cake\Datasource\RepositoryInterface;
 use Cake\ORM\Association\BelongsTo;
 use Cake\ORM\Entity;
@@ -52,6 +53,45 @@ trait LazyLoadEntityTrait
     protected function &_parentGet($property)
     {
         return Entity::get($property);
+    }
+
+    /**
+     * Overrides getRequiredOrFail(), which CakePHP 5's __get() magic method
+     * calls directly (bypassing get()), so that property access via
+     * $entity->property also triggers lazy loading.
+     *
+     * @param string $field Field
+     * @param bool $requireFieldPresence Whether to throw if the field is absent
+     * @return mixed
+     */
+    public function &getRequiredOrFail(string $field, bool $requireFieldPresence = true): mixed
+    {
+        $value = &$this->_parentGetRequiredOrFail($field, false);
+
+        if ($value === null) {
+            $value = $this->_lazyLoad($field);
+        }
+
+        if ($value === null && $requireFieldPresence && !$this->has($field)) {
+            throw new MissingPropertyException([
+                'property' => $field,
+                'entity' => static::class,
+            ]);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Passthru for testing
+     *
+     * @param string $field Field
+     * @param bool $requireFieldPresence Whether to throw if the field is absent
+     * @return mixed
+     */
+    protected function &_parentGetRequiredOrFail(string $field, bool $requireFieldPresence)
+    {
+        return Entity::getRequiredOrFail($field, $requireFieldPresence);
     }
 
     /**
